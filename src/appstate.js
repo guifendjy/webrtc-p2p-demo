@@ -1,6 +1,7 @@
 import { uniid, createRoomCall, disconectCall, emitMediaState } from "./utils";
 
 // will add error handling by adding try-catch blck
+export const APP_URL = "http://localhost:3000";
 
 export const AppState = new master.ReactiveState({
   localVideo: null,
@@ -12,6 +13,8 @@ export const AppState = new master.ReactiveState({
   cameraOff: false,
   remoteMediaState: null,
   error: null,
+  callCreatedLocally: false,
+  roomLink: null,
   handleInput({ target: { value } }) {
     this.room = value;
     if (value == "") this.room = null;
@@ -29,13 +32,15 @@ export const AppState = new master.ReactiveState({
   async createRoom() {
     this.room = uniid("room", 15).toUpperCase();
 
+    this.callCreatedLocally = true;
+    this.showChat();
+
     await createRoomCall(
       this.room,
       this.localVideo,
       this.remoteVideo,
       "create-room"
     );
-    this.showChat();
   },
   endChat() {
     disconectCall(this.remoteVideo); // cleans up the socket
@@ -44,6 +49,7 @@ export const AppState = new master.ReactiveState({
     this.remoteMediaState = null;
     this.micOff = false;
     this.cameraOff = false;
+    this.callCreatedLocally = false;
   },
   toggleMicOff() {
     const localStream = this.localVideo.srcObject;
@@ -59,7 +65,7 @@ export const AppState = new master.ReactiveState({
     const videoTrack = localStream.getVideoTracks()[0];
 
     videoTrack.enabled = !videoTrack.enabled;
-    emitMediaState(this.room, "video", videoTrack.enabled);
+    emitMediaState(this.room, "video", !!videoTrack.enabled);
 
     this.cameraOff = !this.cameraOff;
   },
@@ -68,7 +74,7 @@ export const AppState = new master.ReactiveState({
   },
   copyRoom() {
     navigator.clipboard
-      .writeText(this.room)
+      .writeText(this.roomLink || "")
       .then(() => {
         this.roomCopied = true;
         setTimeout(() => (this.roomCopied = false), 500);
@@ -78,3 +84,8 @@ export const AppState = new master.ReactiveState({
       });
   },
 });
+
+AppState.subscribe(
+  "room",
+  () => (AppState.roomLink = `${APP_URL}/?room=${AppState.room}`)
+);

@@ -1,10 +1,18 @@
 import { AppState } from "./appstate";
-import "./style.css";
 import { videoChat } from "./videoChat";
+import "./style.css";
 
 const { createElement } = master;
 
-const app = createElement(
+// if user uses a url then the don't have to copy the room id
+const urlParams = new URLSearchParams(window.location.search);
+const roomParam = urlParams.get("room");
+
+if (roomParam) {
+  AppState.room = roomParam; // sets the room id onload
+}
+
+const APP = createElement(
   /*html*/ `
   <div class="{openChat ? 'hide' : ''}" id="main-entry">
     <h1>P2P Video Call</h1>
@@ -18,12 +26,13 @@ const app = createElement(
     <p>{error ? error.message : ''}</p>
   </div>
 
-  <div class="{!openChat ? 'hide' : ''}" id="chat"></div>
+  <div class="{!openChat ? 'hide' : ''}" id="chat"></div> <!-- video chat view -->
 `,
   AppState
 );
 
-app.getElementById("chat").appendChild(videoChat); // mounting video chat
+// mounting video chat view
+APP.getElementById("chat").appendChild(videoChat);
 
-// mount onto the dom
-document.querySelector("#app").appendChild(app);
+// mount App onto the dom
+document.querySelector("#app").appendChild(APP);

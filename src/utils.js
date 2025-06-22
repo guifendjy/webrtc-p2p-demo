@@ -1,5 +1,8 @@
 import { io } from "socket.io-client";
-import { AppState } from "./appstate";
+import { AppState, APP_URL } from "./appstate";
+
+//TODO: encrypt offer sent via socket for security because I assume that
+// anyone can intercept the offer and hook on to the peerConnection by sending back their own answer.(research this)
 
 export function uniid(prefix = "", length = 10) {
   const random = Math.random().toString(36).substring(2); // Generate a random base-36 string
@@ -44,8 +47,8 @@ export async function createRoomCall(room, localVideo, remoteVideo, action) {
   AppState.remoteMediaState = null;
 
   try {
-    // Initialize socket
-    socket = io("http://localhost:3000", { timeout: 5000 });
+    // Initialize socket connection
+    socket = io(APP_URL, { timeout: 5000 });
 
     // ✅ Wait for room join confirmation
     const roomStatus = await new Promise((resolve) => {
@@ -84,7 +87,9 @@ export async function createRoomCall(room, localVideo, remoteVideo, action) {
           AppState.error = { message: "Failed to create offer." };
         });
 
-      // this sends out the initial media state of localVideo
+      // this sends out the initial media state to remote onconnection
+      // (might have a better way of doing it, it need to be sent when the user
+      // that joins actually accepts the WebRTC offer signal)
       setTimeout(() => {
         emitMediaState(
           room,

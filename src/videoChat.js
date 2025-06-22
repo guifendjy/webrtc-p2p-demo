@@ -26,16 +26,16 @@ const remoteMediaState = /*html*/ `
 export let videoChat = createElement(
   /*html*/ `
   <div class="chat">
-    <div class="{room == null ? 'hide' : ''} ">
+    <div class="{!callCreatedLocally ? 'hide' : ''} ">
         <label for="room">
-        room Id:
-        <input id="room" class="room-input" disabled  type="text" value="{room || ''}" />
+            <span>room link:</span>
+            <input id="room" class="room-input" disabled  type="text" value="{roomLink || ''}" />
         </label>
         <button onclick="copyRoom()">{roomCopied ? 'copied' : 'copy'}</button>
     </div>
     <div class="video-chat-container">
         <div class="video-frame sender">
-            ${remoteMediaState}
+            ${remoteMediaState} <!-- media state of remote feed -->
             <video id="remoteVideo"  autoplay playsInline></video>
         </div>
         <div class="video-frame receiver">
@@ -44,7 +44,7 @@ export let videoChat = createElement(
     </div>
 
     <div>
-        <button onclick="endChat">end chat</button>
+        <button onclick="endChat()">end call</button>
         <button onclick="toggleMicOff()">{!micOff ? 'mute' : 'unmute'}</button>
         <button onclick="toggleCameraOff()">{!cameraOff ? 'camera off' : 'camera on'}</button>
     </div>

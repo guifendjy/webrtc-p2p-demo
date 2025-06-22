@@ -1,17 +1,29 @@
 import express from "express";
 import http from "http";
+import path from "path";
 import { Server } from "socket.io";
+import { fileURLToPath } from "url";
+import cors from "cors";
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const server = http.createServer(app);
+
+const PORT = process.env.PORT || 5000;
+
 const io = new Server(server, {
-  cors: {
-    origin: "*", // or '*' for dev
-    methods: ["GET", "POST"],
-  },
+  cors: process.env.APP_URL || "*",
 });
 
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "dist")));
+
+app.get("/{*any}", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
 
 const allRooms = {};
 
@@ -77,4 +89,4 @@ function leaveRoom(socketId, socket) {
   }
 }
 
-server.listen(3000, () => console.log("http://localhost:3000"));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
