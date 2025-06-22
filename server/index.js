@@ -14,7 +14,6 @@ const io = new Server(server, {
 app.use(express.static("public"));
 
 const allRooms = {};
-const mediaState = {};
 
 io.on("connection", (socket) => {
   socket.on("create-room", (roomId, callback) => {
@@ -45,13 +44,6 @@ io.on("connection", (socket) => {
 
     socket.join(roomId);
     socket.to(roomId).emit("user-joined", socket.id);
-
-    // if (mediaState[roomId]) {
-    //   console.log(mediaState[roomId]);
-    //   mediaState[roomId].forEach(({ type, enabled }) => {
-    //     socket.to(socket.id).emit("media-state", { type, enabled });
-    //   });
-    // }
   });
 
   socket.on("signal", (data) => {
@@ -59,14 +51,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("media-state", ({ room, type, enabled }) => {
-    mediaState[room] = [
-      ...(mediaState[room] || []),
-      {
-        type,
-        enabled,
-      },
-    ];
-
     socket.to(room).emit("media-state", {
       type,
       enabled,

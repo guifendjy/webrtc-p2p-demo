@@ -29,13 +29,13 @@ export const AppState = new master.ReactiveState({
   async createRoom() {
     this.room = uniid("room", 15).toUpperCase();
 
-    this.showChat();
     await createRoomCall(
       this.room,
       this.localVideo,
       this.remoteVideo,
       "create-room"
     );
+    this.showChat();
   },
   endChat() {
     disconectCall(this.remoteVideo); // cleans up the socket
