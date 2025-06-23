@@ -19,17 +19,16 @@ const servers = {
 };
 let localStream;
 
-export function disconectCall(remoteVideo) {
+export function disconectCall() {
   if (socket) {
-    closePeerConnection(socket.id, remoteVideo);
+    closePeerConnection(socket.id);
     socket.disconnect();
     socket = null;
   }
 }
 
-function closePeerConnection(id, remoteVideo) {
+function closePeerConnection(id) {
   peerConnections[id]?.close();
-  remoteVideo.srcObject = null;
   if (localStream) {
     localStream.getTracks().forEach((track) => track.stop());
     localStream = null;
@@ -94,13 +93,13 @@ export async function createRoomCall(room, localVideo, remoteVideo, action) {
         emitMediaState(
           room,
           "audio",
-          localVideo.srcObject.getAudioTracks()[0]?.enabled
+          localVideo?.srcObject.getAudioTracks()[0]?.enabled
         );
 
         emitMediaState(
           room,
           "video",
-          localVideo.srcObject.getVideoTracks()[0]?.enabled
+          localVideo?.srcObject.getVideoTracks()[0]?.enabled
         );
       }, 500);
     });
@@ -134,9 +133,12 @@ export async function createRoomCall(room, localVideo, remoteVideo, action) {
     socket.on("user-left", (socketId) => {
       AppState.endChat();
       AppState.error = { message: `${socketId} left.` };
+      setTimeout(() => {
+        closePeerConnection(socketId);
+      }, 1000); // give some time to clean up
     });
 
-    socket.on("disconnect", (id) => {
+    socket.on("disconnect", () => {
       AppState.endChat();
     });
 
@@ -173,7 +175,7 @@ function createPeerConnection(id, stream, remoteVideo) {
 
   pc.onicecandidate = ({ candidate }) => {
     if (candidate) {
-      socket.emit("signal", { to: id, signal: candidate });
+      if (socket) socket.emit("signal", { to: id, signal: candidate });
     }
   };
 

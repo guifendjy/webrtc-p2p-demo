@@ -8,32 +8,34 @@ export const AppState = new master.ReactiveState({
   remoteVideo: null,
   openChat: false,
   room: null,
-  roomCopied: false,
   micOff: false,
   cameraOff: false,
   remoteMediaState: null,
   error: null,
   callCreatedLocally: false,
   roomLink: null,
+  showRoomInfo: true,
+  hideRoomInfo({ target: { checked } }) {
+    // toggle the visibility of room info
+    this.showRoomInfo = checked;
+  },
   handleInput({ target: { value } }) {
     this.room = value;
     if (value == "") this.room = null;
   },
   async joinRoom() {
     if (!this.room) return;
+    this.showChat();
+
     await createRoomCall(
       this.room,
       this.localVideo,
       this.remoteVideo,
       "join-room"
     );
-    this.showChat();
   },
   async createRoom() {
     this.room = uniid("room", 15).toUpperCase();
-
-    this.callCreatedLocally = true;
-    this.showChat();
 
     await createRoomCall(
       this.room,
@@ -41,15 +43,24 @@ export const AppState = new master.ReactiveState({
       this.remoteVideo,
       "create-room"
     );
+
+    this.callCreatedLocally = true;
+    this.showChat();
   },
   endChat() {
-    disconectCall(this.remoteVideo); // cleans up the socket
+    disconectCall(); // cleans up the socket
+
     this.openChat = false;
     this.room = null;
-    this.remoteMediaState = null;
     this.micOff = false;
     this.cameraOff = false;
+    this.remoteMediaState = null;
+    this.error = null;
     this.callCreatedLocally = false;
+    this.roomLink = null;
+
+    this.localVideo.srcObject = null;
+    this.remoteVideo.srcObject = null;
   },
   toggleMicOff() {
     const localStream = this.localVideo.srcObject;
@@ -72,12 +83,15 @@ export const AppState = new master.ReactiveState({
   showChat() {
     !this.error && (this.openChat = true);
   },
-  copyRoom() {
+  copyRoom(copiedText, { target }) {
     navigator.clipboard
-      .writeText(this.roomLink || "")
+      .writeText(copiedText)
       .then(() => {
-        this.roomCopied = true;
-        setTimeout(() => (this.roomCopied = false), 500);
+        target.textContent = "copied";
+
+        setTimeout(() => {
+          target.textContent = "copy";
+        }, 500);
       })
       .catch((err) => {
         this.error = err;
